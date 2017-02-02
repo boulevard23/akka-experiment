@@ -1,0 +1,1242 @@
+
+<!DOCTYPE html>
+<!--[if IE 6]>
+<html id="ie6" lang="en">
+<![endif]-->
+<!--[if IE 7]>
+<html id="ie7" lang="en">
+<![endif]-->
+<!--[if IE 8]>
+<html id="ie8" lang="en">
+<![endif]-->
+<!--[if !(IE 6) | !(IE 7) | !(IE 8)]><!-->
+<html lang="en">
+<!--<![endif]-->
+<head>
+<meta charset="UTF-8" />
+<title>Map reduce with Akka and Scala: The famous word count | Knoldus</title>
+<link rel="profile" href="http://gmpg.org/xfn/11" />
+<link rel="stylesheet" type="text/css" media="all" href="https://s0.wp.com/wp-content/themes/pub/twentyten/style.css" />
+<link rel="pingback" href="https://blog.knoldus.com/xmlrpc.php" />
+<script type="text/javascript">
+  WebFontConfig = {"google":{"families":["PT+Serif:r,i,b,bi:latin,latin-ext"]},"typekit":{"id":"mnb6mpo"}};
+  (function() {
+    var wf = document.createElement('script');
+    wf.src = 'https://s1.wp.com/wp-content/plugins/custom-fonts/js/webfont.js';
+    wf.type = 'text/javascript';
+    wf.async = 'true';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(wf, s);
+	})();
+</script><style id="jetpack-custom-fonts-css">.wf-active #site-title{font-family:"brandon-grotesque-1","brandon-grotesque-2",sans-serif;font-style:normal;font-weight:400}.wf-active #site-title{font-style:normal;font-weight:400}.wf-active #site-title a{font-weight:400;font-style:normal}.wf-active .pingback a.url, .wf-active body{font-family:"PT Serif",serif}.wf-active #cancel-comment-reply-link, .wf-active #site-info, .wf-active #wp-calendar, .wf-active .comment-body thead th, .wf-active .comment-body tr th, .wf-active .comment-meta, .wf-active .entry-content label, .wf-active .entry-content thead th, .wf-active .entry-content tr th, .wf-active .entry-meta, .wf-active .entry-utility, .wf-active .form-allowed-tags, .wf-active .pingback p, .wf-active .reply, .wf-active .wp-caption-text{font-family:"PT Serif",serif}.wf-active h1, .wf-active h2, .wf-active h3, .wf-active h4, .wf-active h5, .wf-active h6{font-weight:400;font-family:"brandon-grotesque-1","brandon-grotesque-2",sans-serif;font-style:normal}.wf-active .page-title span{font-family:"brandon-grotesque-1","brandon-grotesque-2",sans-serif;font-style:normal;font-weight:400}.wf-active #access .menu, .wf-active #access div.menu ul, .wf-active #respond label, .wf-active .entry-title, .wf-active .navigation, .wf-active .page-title, .wf-active .widget-title, .wf-active h3#comments-title, .wf-active h3#reply-title{font-family:"brandon-grotesque-1","brandon-grotesque-2",sans-serif;font-style:normal;font-weight:400}.wf-active #access .menu-header, .wf-active div.menu{font-style:normal;font-weight:400}.wf-active .page-title{font-weight:400;font-style:normal}.wf-active .page-title span{font-style:normal;font-weight:400}.wf-active #content .entry-title{font-weight:400;font-style:normal}.wf-active .navigation{font-style:normal;font-weight:400}.wf-active h3#comments-title, .wf-active h3#reply-title{font-weight:400;font-style:normal}.wf-active #respond label{font-style:normal;font-weight:400}.wf-active .widget-title{font-weight:400;font-style:normal}</style>
+		<script src='https://r-login.wordpress.com/remote-login.php?action=js&amp;host=blog.knoldus.com&amp;id=24082517&amp;t=1485754797&amp;back=https%3A%2F%2Fblog.knoldus.com%2F2014%2F09%2F29%2Fmap-reduce-with-akka-and-scala-the-famous-word-count%2F' type="text/javascript"></script>
+		<script type="text/javascript">
+		/* <![CDATA[ */
+			if ( 'function' === typeof WPRemoteLogin ) {
+				document.cookie = "wordpress_test_cookie=test; path=/";
+				if ( document.cookie.match( /(;|^)\s*wordpress_test_cookie\=/ ) ) {
+					WPRemoteLogin();
+				}
+			}
+		/* ]]> */
+		</script>
+		<link rel='dns-prefetch' href='//s2.wp.com' />
+<link rel='dns-prefetch' href='//s0.wp.com' />
+<link rel='dns-prefetch' href='//knoldus.wordpress.com' />
+<link rel='dns-prefetch' href='//s1.wp.com' />
+<link rel="alternate" type="application/rss+xml" title="Knoldus &raquo; Feed" href="https://blog.knoldus.com/feed/" />
+<link rel="alternate" type="application/rss+xml" title="Knoldus &raquo; Comments Feed" href="https://blog.knoldus.com/comments/feed/" />
+<link rel="alternate" type="application/rss+xml" title="Knoldus &raquo; Map reduce with Akka and Scala: The famous word&nbsp;count Comments Feed" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/feed/" />
+	<script type="text/javascript">
+		/* <![CDATA[ */
+		function addLoadEvent(func) {
+			var oldonload = window.onload;
+			if (typeof window.onload != 'function') {
+				window.onload = func;
+			} else {
+				window.onload = function () {
+					oldonload();
+					func();
+				}
+			}
+		}
+		/* ]]> */
+	</script>
+			<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s0.wp.com\/wp-content\/mu-plugins\/wpcom-smileys\/twemoji\/2\/72x72\/","ext":".png","svgUrl":"https:\/\/s0.wp.com\/wp-content\/mu-plugins\/wpcom-smileys\/twemoji\/2\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/s1.wp.com\/wp-includes\/js\/wp-emoji-release.min.js?m=1473172720h&ver=4.6.1-RC1-38499"}};
+			!function(a,b,c){function d(a){var c,d,e,f,g,h=b.createElement("canvas"),i=h.getContext&&h.getContext("2d"),j=String.fromCharCode;if(!i||!i.fillText)return!1;switch(i.textBaseline="top",i.font="600 32px Arial",a){case"flag":return i.fillText(j(55356,56806,55356,56826),0,0),!(h.toDataURL().length<3e3)&&(i.clearRect(0,0,h.width,h.height),i.fillText(j(55356,57331,65039,8205,55356,57096),0,0),c=h.toDataURL(),i.clearRect(0,0,h.width,h.height),i.fillText(j(55356,57331,55356,57096),0,0),d=h.toDataURL(),c!==d);case"diversity":return i.fillText(j(55356,57221),0,0),e=i.getImageData(16,16,1,1).data,f=e[0]+","+e[1]+","+e[2]+","+e[3],i.fillText(j(55356,57221,55356,57343),0,0),e=i.getImageData(16,16,1,1).data,g=e[0]+","+e[1]+","+e[2]+","+e[3],f!==g;case"simple":return i.fillText(j(55357,56835),0,0),0!==i.getImageData(16,16,1,1).data[0];case"unicode8":return i.fillText(j(55356,57135),0,0),0!==i.getImageData(16,16,1,1).data[0];case"unicode9":return i.fillText(j(55358,56631),0,0),0!==i.getImageData(16,16,1,1).data[0]}return!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i;for(i=Array("simple","flag","unicode8","diversity","unicode9"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+<link rel='stylesheet' id='all-css-0-1' href='https://s0.wp.com/_static/??-eJx9kFtuAyEMRTdU6kZJqvxUXQtQlyExGGFGo9l9Taav9MEP+F7dYxtgKcZzbpgbpNkUmkPMAkvxnIykSLj+UPde5A7+xiheUOCMrVh/MVc1inuuqH4qtvVEwpdokTBpbISl8vhB9XLSWcMx2/rOlYoiRs8U52TapIN+c5sNZXbQFjVWdUHaSmiufTYgQuYWlZHPYrRBQDbE3rbI+UaYV7KxjtCKjjhoGUBT3+QIsr43d7Z+VaN4YWnbJiCTrX3W+z2ihH20pE8JfCv++9PpAIHYWeqB5/S0O5yOx/1pt384vwGy3fM+' type='text/css' media='all' />
+<script type='text/javascript' src='https://s0.wp.com/_static/??-eJyFzt0KwjAMBeAXsiv+Tb0Qn6WrcaQuaW1Shz69HeiFMBQCgZyPQ+yYDLIfyhnEhjq3AvnxXk2Qhf0FDGGfnUJDyB/sIyuwTpZihwOYIpBdX2+16BJnXIqiBCIVzaTfLyHfEca/LIAm568mg+Bzaj3Rcblp2+1qfdjtwws0V1vd'></script>
+<link rel='stylesheet' id='all-css-0-2' href='https://s1.wp.com/wp-content/mu-plugins/highlander-comments/style.css?m=1377793621h' type='text/css' media='all' />
+<!--[if lt IE 8]>
+<link rel='stylesheet' id='highlander-comments-ie7-css'  href='https://s1.wp.com/wp-content/mu-plugins/highlander-comments/style-ie7.css?m=1351637563h&#038;ver=20110606' type='text/css' media='all' />
+<![endif]-->
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://knoldus.wordpress.com/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://s1.wp.com/wp-includes/wlwmanifest.xml" /> 
+<link rel='prev' title='Knolx Session : Basics of&nbsp;Backbone.js' href='https://blog.knoldus.com/2014/09/26/basics-of-backbone-js/' />
+<link rel='next' title='Tutorial #1: Getting started with Play Framework&nbsp;2.3.4' href='https://blog.knoldus.com/2014/10/04/tutorial-1/' />
+<meta name="generator" content="WordPress.com" />
+<link rel="canonical" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/" />
+<link rel='shortlink' href='http://wp.me/p1D2XH-1Ic' />
+<link rel="alternate" type="application/json+oembed" href="https://public-api.wordpress.com/oembed/1.0/?format=json&amp;url=https%3A%2F%2Fblog.knoldus.com%2F2014%2F09%2F29%2Fmap-reduce-with-akka-and-scala-the-famous-word-count%2F&amp;for=wpcom-auto-discovery" /><link rel="alternate" type="application/xml+oembed" href="https://public-api.wordpress.com/oembed/1.0/?format=xml&amp;url=https%3A%2F%2Fblog.knoldus.com%2F2014%2F09%2F29%2Fmap-reduce-with-akka-and-scala-the-famous-word-count%2F&amp;for=wpcom-auto-discovery" />
+<!-- Jetpack Open Graph Tags -->
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Map reduce with Akka and Scala: The famous word count" />
+<meta property="og:url" content="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/" />
+<meta property="og:description" content="After working for around a decade with Java and family, recently i tried my hands with Scala and Akka. Yes! changing taste buds is not at all easy. But working with Scala is fun!  Prior to this, ev…" />
+<meta property="article:published_time" content="2014-09-29T13:12:28+00:00" />
+<meta property="article:modified_time" content="2014-10-06T06:26:38+00:00" />
+<meta property="og:site_name" content="Knoldus" />
+<meta property="og:image" content="https://s0.wp.com/i/blank.jpg" />
+<meta property="og:locale" content="en_US" />
+<meta name="twitter:site" content="@knolspeak" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:creator" content="@knolspeak" />
+<meta property="article:publisher" content="https://www.facebook.com/WordPresscom" />
+<link rel="shortcut icon" type="image/x-icon" href="https://s2.wp.com/i/favicon.ico" sizes="16x16 24x24 32x32 48x48" />
+<link rel="icon" type="image/x-icon" href="https://s2.wp.com/i/favicon.ico" sizes="16x16 24x24 32x32 48x48" />
+<link rel="apple-touch-icon-precomposed" href="https://s0.wp.com/i/webclip.png" />
+<link rel='openid.server' href='https://knoldus.wordpress.com/?openidserver=1' />
+<link rel='openid.delegate' href='https://knoldus.wordpress.com/' />
+<link rel="search" type="application/opensearchdescription+xml" href="https://blog.knoldus.com/osd.xml" title="Knoldus" />
+<link rel="search" type="application/opensearchdescription+xml" href="https://s1.wp.com/opensearch.xml" title="WordPress.com" />
+<style type="text/css">
+.widget_twitter li {
+	word-wrap: break-word;
+}
+</style>
+<meta name="application-name" content="Knoldus" /><meta name="msapplication-window" content="width=device-width;height=device-height" /><meta name="msapplication-tooltip" content="Knols of experience to your advantage" /><meta name="msapplication-task" content="name=Subscribe;action-uri=https://blog.knoldus.com/feed/;icon-uri=https://s2.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=Sign up for a free blog;action-uri=http://wordpress.com/signup/;icon-uri=https://s2.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Support;action-uri=http://support.wordpress.com/;icon-uri=https://s2.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Forums;action-uri=http://forums.wordpress.com/;icon-uri=https://s2.wp.com/i/favicon.ico" /><meta name="title" content="Map reduce with Akka and Scala: The famous word&nbsp;count | Knoldus on WordPress.com" />
+<meta name="description" content="After working for around a decade with Java and family, recently i tried my hands with Scala and Akka. Yes! changing taste buds is not at all easy. But working with Scala is fun!  Prior to this, every time when i start on building some APIs, First thing which comes in my mind is Number&hellip;" />
+	<style type="text/css" id="twentyten-header-css">
+			#header {
+		    padding: 20px 0 0;
+		}
+		#site-title,
+		#site-description {
+			position: absolute !important;
+			clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+			clip: rect(1px, 1px, 1px, 1px);
+		}
+		</style>
+<link rel="amphtml" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/amp/" /><style type="text/css" id="syntaxhighlighteranchor"></style>
+		<link rel="stylesheet" id="custom-css-css" type="text/css" href="https://s0.wp.com/?custom-css=1&#038;csblog=1D2XH&#038;cscache=6&#038;csrev=90" />
+		</head>
+
+<body class="single single-post postid-6584 single-format-standard mp6 customizer-styles-applied highlander-enabled highlander-light">
+<div id="wrapper" class="hfeed">
+	<div id="header">
+		<div id="masthead">
+			<div id="branding" role="banner">
+								<div id="site-title">
+					<span>
+						<a href="https://blog.knoldus.com/" title="Knoldus" rel="home">Knoldus</a>
+					</span>
+				</div>
+				<div id="site-description">Knols of experience to your advantage</div>
+
+										<a class="home-link" href="https://blog.knoldus.com/" title="Knoldus" rel="home">
+							<img src="https://knoldus.files.wordpress.com/2014/06/new_logo_1.jpg" width="940" height="198" alt="" />
+						</a>
+								</div><!-- #branding -->
+
+			<div id="access" role="navigation">
+			  				<div class="skip-link screen-reader-text"><a href="#content" title="Skip to content">Skip to content</a></div>
+								<div class="menu-header"><ul id="menu-knoldustopmenu" class="menu"><li id="menu-item-6147" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6147"><a href="http://www.knoldus.com/home.knol">HOME</a></li>
+<li id="menu-item-6148" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-6148"><a href="http://www.knoldus.com/about/ctoinsights.knol">ABOUT US</a>
+<ul class="sub-menu">
+	<li id="menu-item-6153" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6153"><a href="http://www.knoldus.com/about/ctoinsights.knol">CTO Insights</a></li>
+	<li id="menu-item-6154" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6154"><a href="http://www.knoldus.com/about/team.knol">Our Team</a></li>
+	<li id="menu-item-6156" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6156"><a href="http://www.knoldus.com/about/qualitycoding.knol">Quality Coding</a></li>
+	<li id="menu-item-6157" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6157"><a href="http://www.knoldus.com/work/testimonials.knol">Testimonials</a></li>
+</ul>
+</li>
+<li id="menu-item-6149" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-6149"><a href="http://www.knoldus.com/work/services.knol">WORK</a>
+<ul class="sub-menu">
+	<li id="menu-item-6158" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-6158"><a href="http://www.knoldus.com/work/services.knol">Services</a>
+	<ul class="sub-menu">
+		<li id="menu-item-7724" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-7724"><a href="http://www.knoldus.com/services/overview.knol">Overview</a></li>
+		<li id="menu-item-7726" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-7726"><a href="http://www.knoldus.com/services/reactive.knol">Reactive Applications</a></li>
+		<li id="menu-item-14027" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-14027"><a href="http://www.knoldus.com/services/bigdatasolution.knol">Big Data Solutions</a></li>
+		<li id="menu-item-14028" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-14028"><a href="http://www.knoldus.com/learn/training.knol">Workshops</a></li>
+	</ul>
+</li>
+	<li id="menu-item-6159" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6159"><a href="http://www.knoldus.com/work/process.knol">Process</a></li>
+	<li id="menu-item-6161" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6161"><a href="http://www.knoldus.com/about/technologies.knol">Technologies</a></li>
+	<li id="menu-item-19077" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-19077"><a href="http://www.knoldus.com/work/open_source.knol">Open Source</a></li>
+	<li id="menu-item-6162" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6162"><a href="http://www.knoldus.com/work/casestudies.knol">Case Studies</a></li>
+</ul>
+</li>
+<li id="menu-item-6150" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-6150"><a href="http://www.knoldus.com/learn/training.knol">LEARN</a>
+<ul class="sub-menu">
+	<li id="menu-item-14071" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-14071"><a href="http://www.knoldus.com/learn/newsletter.knol">Monthly Newsletter</a></li>
+	<li id="menu-item-6163" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6163"><a href="http://www.knoldus.com/learn/training.knol">Training</a></li>
+	<li id="menu-item-6170" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6170"><a href="https://sites.google.com/a/knoldus.com/knolx/">KnolX</a></li>
+	<li id="menu-item-6169" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6169"><a href="http://www.knoldus.com/learn/community.knol">Community</a></li>
+</ul>
+</li>
+<li id="menu-item-6152" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-6152"><a href="https://blog.knoldus.com/">BLOG</a></li>
+<li id="menu-item-6151" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-6151"><a href="http://www.knoldus.com/work/services/why-knoldus-for-scala.knol">CONNECT</a>
+<ul class="sub-menu">
+	<li id="menu-item-6171" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6171"><a href="http://www.knoldus.com/work/services/why-knoldus-for-scala.knol">Why Knoldus</a></li>
+	<li id="menu-item-6172" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6172"><a href="http://www.knoldus.com/work/services/engagement-models.knol">Engage With Knoldus</a></li>
+	<li id="menu-item-6173" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6173"><a href="http://www.knoldus.com/connect/careers.knol">Careers</a></li>
+	<li id="menu-item-6174" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6174"><a href="http://www.knoldus.com/connect/contactus.knol">Contact Us</a></li>
+</ul>
+</li>
+</ul></div>			</div><!-- #access -->
+		</div><!-- #masthead -->
+	</div><!-- #header -->
+
+	<div id="main">
+
+		<div id="container">
+			<div id="content" role="main">
+
+			
+
+				<div id="nav-above" class="navigation">
+					<div class="nav-previous"><a href="https://blog.knoldus.com/2014/09/26/basics-of-backbone-js/" rel="prev"><span class="meta-nav">&larr;</span> Knolx Session : Basics of&nbsp;Backbone.js</a></div>
+					<div class="nav-next"><a href="https://blog.knoldus.com/2014/10/04/tutorial-1/" rel="next">Tutorial #1: Getting started with Play Framework&nbsp;2.3.4 <span class="meta-nav">&rarr;</span></a></div>
+				</div><!-- #nav-above -->
+
+				<div id="post-6584" class="post-6584 post type-post status-publish format-standard hentry category-scala-3 tag-akka tag-map-reduce tag-scala">
+											<h2 class="entry-title"><a href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/" rel="bookmark">Map reduce with Akka and Scala: The famous word&nbsp;count</a></h2>					
+					<div class="entry-meta">
+						<span class="meta-prep meta-prep-author">Posted on</span> <a href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/" title="6:42 PM" rel="bookmark"><span class="entry-date">September 29, 2014</span></a>						<span class="by-author"><span class="sep">by</span> <span class="author vcard"><a class="url fn n" href="https://blog.knoldus.com/author/mevivs/" title="View all posts by Vivek Mishra" rel="author">Vivek Mishra</a></span> </span>					</div><!-- .entry-meta -->
+
+					<div class="entry-content">
+						<div class="pd-rating" id="pd_rating_holder_5458192_post_6584"></div><br/><p>After working for around a decade with Java and family, recently i tried my hands with Scala and Akka. Yes! changing taste buds is not at all easy. But working with Scala is fun!  Prior to this, every time when i start on building some APIs, First thing which comes in my mind is</p>
+<p>Number of java classes or beans. Honestly a POJO is never more than having getters and setters. (Do i need them?)</p>
+<p>Scala just made it easy. Let&#8217;s see how!</p>
+<p><span id="more-6584"></span></p>
+<p><strong>Java</strong></p>
+<pre class="brush: java; title: ; notranslate" title="">
+public class Person
+{
+private int age;
+
+public int getAge()
+{
+return this.age;
+}
+
+public void setAge(Integer age)
+{
+this.age=age
+}
+</pre>
+<p>Honestly in previous java blogs i used to skip these setters and getters by simply mentioning as</p>
+<p>// getters and setters!</p>
+<p>With <strong>Scala</strong> it&#8217;s really easy.</p>
+<pre class="brush: scala; title: ; notranslate" title="">
+class Person {
+ var _age: Int = _
+ def age = _age
+ def age_=(value: Int) = _age = value
+}
+</pre>
+<p>By the way, you can also define a property class for this and access it as property.<br />
+There are number of things which makes Scala having an added advantage over Java(e.g. immutability, utility functions etc.) but i will skip these for now and come back to topic, which we will walk through together.</p>
+<p><strong>Map Reduce</strong><br />
+It was originally published as a google paper <a href="http://research.google.com/archive/mapreduce.html">here</a>. With Hadoop came into existence around late 2009, map reduce processing has been widely used across for large data processing. For more detail about Hadoop map reduce can be found <a href="http://hadoop.apache.org/docs/r1.2.1/mapred_tutorial.html">here</a>. It&#8217;s a model to perform parallel processing of data distributed across multiple data nodes.</p>
+<p>Here we will take on famous word count example, which will read words from a file and will perform word count in map reduce manner.</p>
+<p>I assume that user is aware <a href="http://akka.io/">Akka</a>, in short it is all about asynchronous distributed message processing and can process millions of message per second on local box. Which enables application to utilize CPU and resources at the fullest.</p>
+<p>Let&#8217;s discuss few of components(rather scala methods) to define and process a file on local box.</p>
+<p><strong>FileReceiver</strong> : An Akka actor to receive file name as an input message to initiate word count and finally broadcast message on completion.</p>
+<pre class="brush: scala; title: ; notranslate" title="">
+class FileReceiver extends Actor {
+
+  def receive =
+    {
+      case fileName: String =&gt;
+        val system = ActorSystem(&quot;receiversystem&quot;)
+        val global = system.actorOf(Props(new CountAggregator(8)))
+        val lineCollector = system.actorOf(Props(new LineCollector(system.actorOf(Props(new LocalAggregator(global))))))
+        val router = system.actorOf(Props(new LineCollector(system.actorOf(Props(new LocalAggregator(global))))).withRouter(RoundRobinRouter(nrOfInstances = 8)))
+        print(s&quot;Started at ==&gt;&quot;)
+        println(System.currentTimeMillis())
+
+        // determine line boundaries for number of chunks
+        val file = new File(fileName)
+        val chunkSize = 300000
+        val count  = file.length()/chunkSize
+
+        for (i &lt;- 0 to count.intValue()) {
+          val start = i * chunkSize //0, 10,20
+          val end = chunkSize + start // 10,20,30
+          router ! (fileName, start, end)  //send chunks
+        }
+
+        val remaining = chunkSize*count
+        router ! (fileName, remaining, file.length()) //send out remaining chunk
+
+        router ! Broadcast (true) //broadcast end of day message!
+
+    }
+}
+</pre>
+<p><strong>LineCollector</strong>: Akka actor to receive file information and open file channel to read and further distribute lines as chunks message.(Local mapper)</p>
+<pre class="brush: scala; title: ; notranslate" title="">
+/**
+ *  Chunk processor
+*/
+class LineCollector(localAgg: ActorRef) extends Actor {
+  def receive =
+    {
+
+      case (fileName: String, chunkStart: Int, chunkSize: Int) =&gt;
+
+        val file = new File(fileName)
+        val channel = new RandomAccessFile(file, &quot;r&quot;).getChannel();
+        val mappedBuff = channel.map(FileChannel.MapMode.READ_ONLY, 0,file.length()) //map complete file
+
+        // load only if it is not loaded!
+
+        var endP = chunkSize
+        // file size is greater than chunk
+        if (endP &gt;= file.length()) {
+          endP = file.length().intValue - 1
+        }
+
+        if (chunkStart &lt; file.length()) {
+          var start = mappedBuff.get(chunkStart) // start character
+          val startPosition = trail(chunkStart, mappedBuff, start, endP)
+
+          var end = mappedBuff.get(endP) // end character
+
+          val endPosition = if ((endP != file.length() - 1)) trail(endP, mappedBuff, end, endP) else endP // valid end character
+          val stringBuilder = new StringBuilder(endPosition - startPosition)
+          val size = endPosition - startPosition
+          val byteArray = new Array[Byte](size)
+
+          // prepare and send buffer to local combiner
+          if (endPosition &gt; startPosition) {
+            for (i &lt;- startPosition to endPosition) {
+              val character = mappedBuff.get(i).asInstanceOf[Char]
+              if (character == '\n') {
+                stringBuilder.append(' ')
+              } else {
+                stringBuilder.append(character)
+              }
+            }
+            localAgg ! stringBuilder.toString.split(&quot; &quot;).groupBy(x =&gt; x)  //sending chunks
+          }
+
+        }
+
+      case (done: Boolean) =&gt;
+        localAgg ! done // end of day message
+    }
+
+  private def trail(startP: Int, charBuff: java.nio.MappedByteBuffer, start: Byte, length: Int): Int = {
+
+    var s = start.asInstanceOf[Char]
+    val position = startP
+    var next = position
+
+    // if start character is not space, keep backtracking to start with new character word
+    if (position &lt;= length) {
+      while (!s.equals(' ') &amp;&amp; position &gt; 0) {
+        s = charBuff.get(next).asInstanceOf[Char]
+        next = next - 1
+      }
+    }
+
+    if (position != next) next + 1 else position
+  }
+
+}
+
+</pre>
+<p><strong> LocalAggregator </strong>: Akka actor to act as local chunk collector and perform word count aggregation. (e.g. Local reducer)</p>
+<pre class="brush: scala; title: ; notranslate" title="">
+
+/**
+ * Local(to line chunk collector) akka combiner
+ */
+class LocalAggregator(globalAgg: ActorRef) extends Actor {
+  val wordCountMap = scala.collection.mutable.Map[String, Int]()
+  def receive =
+    {
+      case countMap: Map[String, Array[String]] =&gt;
+        countMap map { case (k, v) =&gt; wordCountMap += ((k, wordCountMap.getOrElse(k, 0) + v.size)) }
+      case complete: Boolean =&gt;
+        globalAgg ! wordCountMap
+    }
+}
+
+</pre>
+<p><strong>CountAggregator</strong>: Akka actor to act as global line aggregator to publish final word count after successful reading of file.</p>
+<pre class="brush: scala; title: ; notranslate" title="">
+/**
+ * Global combiner to combine and print final output after aggregating results from local akka based combiners.
+ */
+	class CountAggregator(threadCount: Int) extends Actor {
+	  val wordCountMap = scala.collection.mutable.Map[String, Int]()
+	  var count: Integer = 0;
+	  def receive =
+	    {
+	      case localCount: scala.collection.mutable.Map[String, Int] =&gt;
+	        //        count = count + 1
+	        localCount map (x =&gt; wordCountMap += ((x._1, wordCountMap.getOrElse(x._1, 0) + x._2)))
+	        count = count + 1
+	        if (count == threadCount) {
+	          println(&quot;Got the completion message ... khallas!&quot;)
+	          onCompletion
+	        }
+	    }
+
+	  // print final word count on output
+	  def onCompletion() {
+
+	        for (word &lt;- wordCountMap.keys) {
+	          print(word + &quot;=&gt;&quot;)
+	          println(wordCountMap.get(word).get)
+	        }
+	        print(s&quot;Completed at ==&gt;&quot;)
+	        println(System.currentTimeMillis())
+
+	  }
+
+	}
+</pre>
+<p>finally what we need is an App to run this. here it is!</p>
+<pre class="brush: scala; title: ; notranslate" title="">
+object WordCountRunner extends App
+{
+
+ val receiverSystem = ActorSystem(&quot;receiversystem&quot;, ConfigFactory.load(&quot;application_remote&quot;))
+
+ val c = receiverSystem.actorOf(Props[FileReceiver],&quot;receiver&quot;)
+  c ! &quot;/home/vivek/w2&quot;  // 1 GB file
+}</pre>
+<p>That&#8217;s it! We can write all this in single scala file. What about java ???<br />
+Also, try this out at your end it is incredibly fast on my local box(8 GB dual core Dell laptop)!</p>
+<p>Oh yes! Forget to mention about</p>
+<pre class="brush: scala; title: ; notranslate" title="">
+ConfigFactory.load(&quot;application_remote&quot;)
+</pre>
+<p>Load your Akka configuration file prepare and get Actorsystem up and running. Configuration looks very simple!</p>
+<pre class="brush: scala; title: ; notranslate" title="">
+akka {
+actor {
+provider = &quot;akka.remote.RemoteActorRefProvider&quot;
+}
+remote {
+enabled-transports = [&quot;akka.remote.netty.tcp&quot;]
+netty.tcp {
+hostname = &quot;127.0.0.1&quot;
+port = 5553
+}
+}
+}
+</pre>
+<p>Just need to configure Remote actor provider, host and port and that&#8217;s it.</p>
+<p>Have fun and happy programming.</p>
+<p><em><strong>References: </strong><a href="http://dustinmartin.net/getters-and-setters-in-scala/" rel="nofollow">http://dustinmartin.net/getters-and-setters-in-scala/</a></em></p>
+<div id="jp-post-flair" class="sharedaddy sd-rating-enabled sd-like-enabled sd-sharing-enabled"><div class="sharedaddy sd-sharing-enabled"><div class="robots-nocontent sd-block sd-social sd-social-icon sd-sharing"><h3 class="sd-title">Share the Knol:</h3><div class="sd-content"><ul><li class="share-twitter"><a rel="nofollow" data-shared="sharing-twitter-6584" class="share-twitter sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?share=twitter" target="_blank" title="Click to share on Twitter"><span></span><span class="sharing-screen-reader-text">Click to share on Twitter (Opens in new window)</span></a></li><li class="share-facebook"><a rel="nofollow" data-shared="sharing-facebook-6584" class="share-facebook sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?share=facebook" target="_blank" title="Share on Facebook"><span></span><span class="sharing-screen-reader-text">Share on Facebook (Opens in new window)</span></a></li><li class="share-linkedin"><a rel="nofollow" data-shared="sharing-linkedin-6584" class="share-linkedin sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?share=linkedin" target="_blank" title="Click to share on LinkedIn"><span></span><span class="sharing-screen-reader-text">Click to share on LinkedIn (Opens in new window)</span></a></li><li class="share-google-plus-1"><a rel="nofollow" data-shared="sharing-google-6584" class="share-google-plus-1 sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?share=google-plus-1" target="_blank" title="Click to share on Google+"><span></span><span class="sharing-screen-reader-text">Click to share on Google+ (Opens in new window)</span></a></li><li class="share-pinterest"><a rel="nofollow" data-shared="sharing-pinterest-6584" class="share-pinterest sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?share=pinterest" target="_blank" title="Click to share on Pinterest"><span></span><span class="sharing-screen-reader-text">Click to share on Pinterest (Opens in new window)</span></a></li><li class="share-tumblr"><a rel="nofollow" data-shared="" class="share-tumblr sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?share=tumblr" target="_blank" title="Click to share on Tumblr"><span></span><span class="sharing-screen-reader-text">Click to share on Tumblr (Opens in new window)</span></a></li><li class="share-reddit"><a rel="nofollow" data-shared="" class="share-reddit sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?share=reddit" target="_blank" title="Click to share on Reddit"><span></span><span class="sharing-screen-reader-text">Click to share on Reddit (Opens in new window)</span></a></li><li class="share-pocket"><a rel="nofollow" data-shared="" class="share-pocket sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?share=pocket" target="_blank" title="Click to share on Pocket"><span></span><span class="sharing-screen-reader-text">Click to share on Pocket (Opens in new window)</span></a></li><li><a href="#" class="sharing-anchor sd-button share-more"><span>More</span></a></li><li class="share-end"></li></ul><div class="sharing-hidden"><div class="inner" style="display: none;"><ul><li class="share-email"><a rel="nofollow" data-shared="" class="share-email sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?share=email" target="_blank" title="Click to email"><span></span><span class="sharing-screen-reader-text">Click to email (Opens in new window)</span></a></li><li class="share-print"><a rel="nofollow" data-shared="" class="share-print sd-button share-icon no-text" href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/#print" target="_blank" title="Click to print"><span></span><span class="sharing-screen-reader-text">Click to print (Opens in new window)</span></a></li><li class="share-end"></li><li class="share-end"></li></ul></div></div></div></div></div><div class='sharedaddy sd-block sd-like jetpack-likes-widget-wrapper jetpack-likes-widget-unloaded' id='like-post-wrapper-24082517-6584-588ed1adee308' data-src='//widgets.wp.com/likes/#blog_id=24082517&amp;post_id=6584&amp;origin=knoldus.wordpress.com&amp;obj_id=24082517-6584-588ed1adee308' data-name='like-post-frame-24082517-6584-588ed1adee308'><h3 class='sd-title'>Like this:</h3><div class='likes-widget-placeholder post-likes-widget-placeholder' style='height: 55px;'><span class='button'><span>Like</span></span> <span class="loading">Loading...</span></div><span class='sd-text-color'></span><a class='sd-link-color'></a></div></div>											</div><!-- .entry-content -->
+
+
+					<div class="entry-utility">
+												This entry was posted in <a href="https://blog.knoldus.com/category/scala-3/" rel="category tag">Scala</a> and tagged <a href="https://blog.knoldus.com/tag/akka/" rel="tag">Akka</a>, <a href="https://blog.knoldus.com/tag/map-reduce/" rel="tag">map reduce</a>, <a href="https://blog.knoldus.com/tag/scala/" rel="tag">scala</a>. Bookmark the <a href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/" title="Permalink to Map reduce with Akka and Scala: The famous word&nbsp;count" rel="bookmark">permalink</a>.											</div><!-- .entry-utility -->
+				</div><!-- #post-## -->
+
+				<div id="nav-below" class="navigation">
+					<div class="nav-previous"><a href="https://blog.knoldus.com/2014/09/26/basics-of-backbone-js/" rel="prev"><span class="meta-nav">&larr;</span> Knolx Session : Basics of&nbsp;Backbone.js</a></div>
+					<div class="nav-next"><a href="https://blog.knoldus.com/2014/10/04/tutorial-1/" rel="next">Tutorial #1: Getting started with Play Framework&nbsp;2.3.4 <span class="meta-nav">&rarr;</span></a></div>
+				</div><!-- #nav-below -->
+
+				
+			<div id="comments">
+
+
+			<h3 id="comments-title">3 Responses to <em>Map reduce with Akka and Scala: The famous word&nbsp;count</em></h3>
+
+
+			<ol class="commentlist">
+					<li class="comment even thread-even depth-1 highlander-comment" id="li-comment-15531">
+		<div id="comment-15531">
+			<div class="comment-author vcard">
+				<img alt='' src='https://2.gravatar.com/avatar/b76f6a3c023a4927d163a044af18e9e3?s=40&#038;d=identicon&#038;r=G' class='avatar avatar-40' height='40' width='40' />				<cite class="fn">Scott Gardner</cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/#comment-15531">
+				October 2, 2014 at 12:07 PM</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>IMHO it&#8217;d be better not to simply copy-paste stuff from places and compile into one.<br />
+And your first piece of Scala code doesn&#8217;t compile:<br />
+class Person<br />
+{<br />
+var age:Int = _<br />
+def age = _age<br />
+def age_=(age: Int) = _age = age<br />
+}</p>
+<p>At least add some references instead of just plagiarizing.</p>
+</div>
+
+			<div class="reply">
+				<a rel='nofollow' class='comment-reply-link' href='https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?replytocom=15531#respond' onclick='return addComment.moveForm( "comment-15531", "15531", "respond", "6584" )' aria-label='Reply to Scott Gardner'>Reply</a>			</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	<ul class="children">
+	<li class="comment byuser comment-author-mevivs bypostauthor odd alt depth-2 highlander-comment" id="li-comment-15532">
+		<div id="comment-15532">
+			<div class="comment-author vcard">
+				<img alt='' src='https://0.gravatar.com/avatar/94ad1643f1e4be05140cb96a762be1ad?s=40&#038;d=identicon&#038;r=G' class='avatar avatar-40' height='40' width='40' />				<cite class="fn"><a href='http://mevivs.wordpress.com' rel='external nofollow' class='url'>Vivek Mishra</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/#comment-15532">
+				October 2, 2014 at 12:42 PM</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>Thanks!Added missing reference as well</p>
+<p>Cheers,<br />
+-Vivek</p>
+</div>
+
+			<div class="reply">
+				<a rel='nofollow' class='comment-reply-link' href='https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?replytocom=15532#respond' onclick='return addComment.moveForm( "comment-15532", "15532", "respond", "6584" )' aria-label='Reply to Vivek Mishra'>Reply</a>			</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li><!-- #comment-## -->
+</ul><!-- .children -->
+</li><!-- #comment-## -->
+	<li class="comment even thread-odd thread-alt depth-1 highlander-comment" id="li-comment-22406">
+		<div id="comment-22406">
+			<div class="comment-author vcard">
+				<img alt='' src='https://1.gravatar.com/avatar/a90c97eb1427a000b4b0c8fb124367ce?s=40&#038;d=identicon&#038;r=G' class='avatar avatar-40' height='40' width='40' />				<cite class="fn">apanimesh061</cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/#comment-22406">
+				May 22, 2015 at 1:35 AM</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>Hi,<br />
+I was able to set up the project and also build it without any errors but when I run the program hags after it was read all the chunks. The program control does not go into CountAggregator! How should I make this work?</p>
+</div>
+
+			<div class="reply">
+				<a rel='nofollow' class='comment-reply-link' href='https://blog.knoldus.com/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/?replytocom=22406#respond' onclick='return addComment.moveForm( "comment-22406", "22406", "respond", "6584" )' aria-label='Reply to apanimesh061'>Reply</a>			</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li><!-- #comment-## -->
+			</ol>
+
+
+	
+
+				<div id="respond" class="comment-respond">
+			<h3 id="reply-title" class="comment-reply-title">Leave a Reply <small><a rel="nofollow" id="cancel-comment-reply-link" href="/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/#respond" style="display:none;">Cancel reply</a></small></h3>				<form action="https://blog.knoldus.com/wp-comments-post.php" method="post" id="commentform" class="comment-form">
+					<input type="hidden" id="highlander_comment_nonce" name="highlander_comment_nonce" value="6f4faa62e1" /><input type="hidden" name="_wp_http_referer" value="/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/" />
+<input type="hidden" name="hc_post_as" id="hc_post_as" value="guest" />
+
+<div class="comment-form-field comment-textarea">
+	<label for="comment">Enter your comment here...</label>
+	<div id="comment-form-comment"><textarea id="comment" name="comment" title="Enter your comment here..."></textarea></div>
+</div>
+
+<div id="comment-form-identity">
+
+	<div id="comment-form-nascar">
+		<p>Fill in your details below or click an icon to log in:</p>
+		<ul>
+			<li class="selected" style="display:none;">
+				<a href="#comment-form-guest" id="postas-guest" title="Guest">
+					<span></span>
+				</a>
+			</li>
+			<li>
+				<a href="#comment-form-load-service:WordPress.com" id="postas-wordpress" title="WordPress.com">
+					<span></span>
+				</a>
+			</li>
+			<li>
+				<a href="#comment-form-load-service:Twitter" id="postas-twitter" title="Twitter">
+					<span></span>
+				</a>
+			</li>
+			<li>
+				<a href="#comment-form-load-service:Facebook" id="postas-facebook" title="Facebook">
+					<span></span>
+				</a>
+			</li>
+			<li>
+		</ul>
+	</div>
+
+	<div id="comment-form-guest" class="comment-form-service selected">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+<a href="https://gravatar.com/site/signup/" target="_blank">				<img src="https://1.gravatar.com/avatar/ad516503a11cd5ca435acc9bb6523536?s=25&amp;d=identicon&amp;forcedefault=y&amp;r=G" alt="Gravatar" width="25" class="no-grav" />
+</a>			</div>
+
+				<div class="comment-form-fields">
+				<div class="comment-form-field comment-form-email">
+					<label for="email">Email <span class="required">(required)</span> <span class="nopublish">(Address never made public)</span></label>
+					<div class="comment-form-input"><input id="email" name="email" type="email" value="" /></div>
+				</div>
+				<div class="comment-form-field comment-form-author">
+					<label for="author">Name <span class="required">(required)</span></label>
+					<div class="comment-form-input"><input id="author" name="author" type="text" value="" /></div>
+				</div>
+				<div class="comment-form-field comment-form-url">
+					<label for="url">Website</label>
+					<div class="comment-form-input"><input id="url" name="url" type="url" value="" /></div>
+				</div>
+			</div>
+	
+		</div>
+	</div>
+
+	<div id="comment-form-wordpress" class="comment-form-service">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+				<img src="https://1.gravatar.com/avatar/ad516503a11cd5ca435acc9bb6523536?s=25&amp;d=identicon&amp;forcedefault=y&amp;r=G" alt="WordPress.com Logo" width="25" class="no-grav" />
+			</div>
+
+				<div class="comment-form-fields">
+				<input type="hidden" name="wp_avatar" id="wordpress-avatar" class="comment-meta-wordpress" value="" />
+				<input type="hidden" name="wp_user_id" id="wordpress-user_id" class="comment-meta-wordpress" value="" />
+				<input type="hidden" name="wp_access_token" id="wordpress-access_token" class="comment-meta-wordpress" value="" />
+				<p class="comment-form-posting-as pa-wordpress"><strong></strong> You are commenting using your WordPress.com account. <span class="comment-form-log-out">(&nbsp;<a href="javascript:HighlanderComments.doExternalLogout( 'wordpress' );">Log&nbsp;Out</a>&nbsp;/&nbsp;<a href="#" onclick="javascript:HighlanderComments.switchAccount();return false;">Change</a>&nbsp;)</span></p>
+			</div>
+	
+		</div>
+	</div>
+
+	<div id="comment-form-twitter" class="comment-form-service">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+				<img src="https://1.gravatar.com/avatar/ad516503a11cd5ca435acc9bb6523536?s=25&amp;d=identicon&amp;forcedefault=y&amp;r=G" alt="Twitter picture" width="25" class="no-grav" />
+			</div>
+
+				<div class="comment-form-fields">
+				<input type="hidden" name="twitter_avatar" id="twitter-avatar" class="comment-meta-twitter" value="" />
+				<input type="hidden" name="twitter_user_id" id="twitter-user_id" class="comment-meta-twitter" value="" />
+				<input type="hidden" name="twitter_access_token" id="twitter-access_token" class="comment-meta-twitter" value="" />
+				<p class="comment-form-posting-as pa-twitter"><strong></strong> You are commenting using your Twitter account. <span class="comment-form-log-out">(&nbsp;<a href="javascript:HighlanderComments.doExternalLogout( 'twitter' );">Log&nbsp;Out</a>&nbsp;/&nbsp;<a href="#" onclick="javascript:HighlanderComments.switchAccount();return false;">Change</a>&nbsp;)</span></p>
+			</div>
+	
+		</div>
+	</div>
+
+	<div id="comment-form-facebook" class="comment-form-service">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+				<img src="https://1.gravatar.com/avatar/ad516503a11cd5ca435acc9bb6523536?s=25&amp;d=identicon&amp;forcedefault=y&amp;r=G" alt="Facebook photo" width="25" class="no-grav" />
+			</div>
+
+				<div class="comment-form-fields">
+				<input type="hidden" name="fb_avatar" id="facebook-avatar" class="comment-meta-facebook" value="" />
+				<input type="hidden" name="fb_user_id" id="facebook-user_id" class="comment-meta-facebook" value="" />
+				<input type="hidden" name="fb_access_token" id="facebook-access_token" class="comment-meta-facebook" value="" />
+				<p class="comment-form-posting-as pa-facebook"><strong></strong> You are commenting using your Facebook account. <span class="comment-form-log-out">(&nbsp;<a href="javascript:HighlanderComments.doExternalLogout( 'facebook' );">Log&nbsp;Out</a>&nbsp;/&nbsp;<a href="#" onclick="javascript:HighlanderComments.switchAccount();return false;">Change</a>&nbsp;)</span></p>
+			</div>
+	
+		</div>
+	</div>
+
+	<div id="comment-form-googleplus" class="comment-form-service">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+				<img src="https://1.gravatar.com/avatar/ad516503a11cd5ca435acc9bb6523536?s=25&amp;d=identicon&amp;forcedefault=y&amp;r=G" alt="Google+ photo" width="25" class="no-grav" />
+			</div>
+
+				<div class="comment-form-fields">
+				<input type="hidden" name="googleplus_avatar" id="googleplus-avatar" class="comment-meta-googleplus" value="" />
+				<input type="hidden" name="googleplus_user_id" id="googleplus-user_id" class="comment-meta-googleplus" value="" />
+				<input type="hidden" name="googleplus_access_token" id="googleplus-access_token" class="comment-meta-googleplus" value="" />
+				<p class="comment-form-posting-as pa-googleplus"><strong></strong> You are commenting using your Google+ account. <span class="comment-form-log-out">(&nbsp;<a href="javascript:HighlanderComments.doExternalLogout( 'googleplus' );">Log&nbsp;Out</a>&nbsp;/&nbsp;<a href="#" onclick="javascript:HighlanderComments.switchAccount();return false;">Change</a>&nbsp;)</span></p>
+			</div>
+	
+		</div>
+	</div>
+
+
+	<div id="comment-form-load-service" class="comment-form-service">
+		<div class="comment-form-posting-as-cancel"><a href="javascript:HighlanderComments.cancelExternalWindow();">Cancel</a></div>
+		<p>Connecting to %s</p>
+	</div>
+
+</div>
+
+<script type="text/javascript">
+var highlander_expando_javascript = function(){
+	var input = document.createElement( 'input' ),
+	    comment = jQuery( '#comment' );
+
+	if ( 'placeholder' in input ) {
+		comment.attr( 'placeholder', jQuery( '.comment-textarea label' ).remove().text() );
+	}
+
+	// Expando Mode: start small, then auto-resize on first click + text length
+	jQuery( '#comment-form-identity' ).hide();
+	jQuery( '#comment-form-subscribe' ).hide();
+	jQuery( '#commentform .form-submit' ).hide();
+
+	comment.css( { 'height':'10px' } ).one( 'focus', function() {
+		var timer = setInterval( HighlanderComments.resizeCallback, 10 )
+		jQuery( this ).animate( { 'height': HighlanderComments.initialHeight } ).delay( 100 ).queue( function(n) { clearInterval( timer ); HighlanderComments.resizeCallback(); n(); } );
+		jQuery( '#comment-form-identity' ).slideDown();
+		jQuery( '#comment-form-subscribe' ).slideDown();
+		jQuery( '#commentform .form-submit' ).slideDown();
+	});
+}
+jQuery(document).ready( highlander_expando_javascript );
+</script>
+
+<div id="comment-form-subscribe">
+	<p class="comment-subscription-form"><input type="checkbox" name="subscribe" id="subscribe" value="subscribe" style="width: auto;"/> <label class="subscribe-label" id="subscribe-label" for="subscribe" style="display: inline;">Notify me of new comments via email.</label></p></div>
+
+
+
+
+<p class="form-submit"><input name="submit" type="submit" id="comment-submit" class="submit" value="Post Comment" /> <input type='hidden' name='comment_post_ID' value='6584' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</p><p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="b0af8dbeeb" /></p>
+<input type="hidden" name="genseq" value="1485754797" />
+<p style="display: none;"><input type="hidden" id="ak_js" name="ak_js" value="202"/></p>				</form>
+					</div><!-- #respond -->
+		<div style="clear: both"></div>
+</div><!-- #comments -->
+
+
+			</div><!-- #content -->
+		</div><!-- #container -->
+
+
+		<div id="primary" class="widget-area" role="complementary">
+						<ul class="xoxo">
+
+<li id="text-11" class="widget-container widget_text">			<div class="textwidget"><a href="http://www.knoldus.com/connect/careers.knol" />
+We are Hiring 
+</a></div>
+		</li><li id="search-2" class="widget-container widget_search"><form role="search" method="get" id="searchform" class="searchform" action="https://blog.knoldus.com/">
+				<div>
+					<label class="screen-reader-text" for="s">Search for:</label>
+					<input type="text" value="" name="s" id="s" />
+					<input type="submit" id="searchsubmit" value="Search" />
+				</div>
+			</form></li><li id="text-3" class="widget-container widget_text">			<div class="textwidget"><a href="https://www.facebook.com/KnoldusSoftware" target="_blank"><img src="https://knoldus.files.wordpress.com/2014/06/7slash6-round-clean-social-icons-64x64-facebook.png" /></a>
+<a href="http://www.linkedin.com/company/2594886" target="_blank"><img src="https://knoldus.files.wordpress.com/2014/06/7slash6-round-clean-social-icons-64x64-linkedin.png" /></a>
+<a href="https://twitter.com/#!/knolspeak" target="_blank"><img src="https://knoldus.files.wordpress.com/2014/06/7slash6-round-clean-social-icons-64x64-twitter.png" /></a></div>
+		</li><li id="google_translate_widget-3" class="widget-container widget_google_translate_widget"><h3 class="widget-title">Change Language of Blog</h3><div id="google_translate_element"></div></li><li id="tag_cloud-2" class="widget-container widget_tag_cloud"><h3 class="widget-title"></h3><div style="overflow: hidden;"><a href="https://blog.knoldus.com/category/agile/" style="font-size: 120.41666666667%; padding: 1px; margin: 1px;"  title="Agile (82)">Agile</a> <a href="https://blog.knoldus.com/category/ajax/" style="font-size: 104.66666666667%; padding: 1px; margin: 1px;"  title="AJAX (28)">AJAX</a> <a href="https://blog.knoldus.com/category/akka/" style="font-size: 113.41666666667%; padding: 1px; margin: 1px;"  title="Akka (58)">Akka</a> <a href="https://blog.knoldus.com/category/amazon-ec2/" style="font-size: 101.16666666667%; padding: 1px; margin: 1px;"  title="Amazon EC2 (16)">Amazon EC2</a> <a href="https://blog.knoldus.com/category/apache-spark/" style="font-size: 106.70833333333%; padding: 1px; margin: 1px;"  title="apache spark (35)">apache spark</a> <a href="https://blog.knoldus.com/category/architecture/" style="font-size: 116.625%; padding: 1px; margin: 1px;"  title="Architecture (69)">Architecture</a> <a href="https://blog.knoldus.com/category/best-practices/" style="font-size: 100%; padding: 1px; margin: 1px;"  title="Best Practices (12)">Best Practices</a> <a href="https://blog.knoldus.com/category/big-data-2/" style="font-size: 103.79166666667%; padding: 1px; margin: 1px;"  title="big data (25)">big data</a> <a href="https://blog.knoldus.com/category/bootstrap/" style="font-size: 102.04166666667%; padding: 1px; margin: 1px;"  title="Bootstrap (19)">Bootstrap</a> <a href="https://blog.knoldus.com/category/cassandra/" style="font-size: 100.58333333333%; padding: 1px; margin: 1px;"  title="Cassandra (14)">Cassandra</a> <a href="https://blog.knoldus.com/category/clojure/" style="font-size: 100%; padding: 1px; margin: 1px;"  title="Clojure (12)">Clojure</a> <a href="https://blog.knoldus.com/category/cloud/" style="font-size: 113.70833333333%; padding: 1px; margin: 1px;"  title="Cloud (59)">Cloud</a> <a href="https://blog.knoldus.com/category/css/" style="font-size: 103.79166666667%; padding: 1px; margin: 1px;"  title="CSS (25)">CSS</a> <a href="https://blog.knoldus.com/category/future/" style="font-size: 102.91666666667%; padding: 1px; margin: 1px;"  title="Future (22)">Future</a> <a href="https://blog.knoldus.com/category/java/" style="font-size: 134.70833333333%; padding: 1px; margin: 1px;"  title="Java (131)">Java</a> <a href="https://blog.knoldus.com/category/javascript-2/" style="font-size: 113.70833333333%; padding: 1px; margin: 1px;"  title="JavaScript (59)">JavaScript</a> <a href="https://blog.knoldus.com/category/jquery-2/" style="font-size: 104.66666666667%; padding: 1px; margin: 1px;"  title="jQuery (28)">jQuery</a> <a href="https://blog.knoldus.com/category/liftweb/" style="font-size: 102.625%; padding: 1px; margin: 1px;"  title="LiftWeb (21)">LiftWeb</a> <a href="https://blog.knoldus.com/category/mongodb/" style="font-size: 102.04166666667%; padding: 1px; margin: 1px;"  title="MongoDB (19)">MongoDB</a> <a href="https://blog.knoldus.com/category/news/" style="font-size: 103.20833333333%; padding: 1px; margin: 1px;"  title="News (23)">News</a> <a href="https://blog.knoldus.com/category/node-js/" style="font-size: 100.29166666667%; padding: 1px; margin: 1px;"  title="Node.js (13)">Node.js</a> <a href="https://blog.knoldus.com/category/non-blocking/" style="font-size: 101.16666666667%; padding: 1px; margin: 1px;"  title="Non-Blocking (16)">Non-Blocking</a> <a href="https://blog.knoldus.com/category/play-framework-2/" style="font-size: 112.83333333333%; padding: 1px; margin: 1px;"  title="Play Framework (56)">Play Framework</a> <a href="https://blog.knoldus.com/category/reactive/" style="font-size: 104.375%; padding: 1px; margin: 1px;"  title="Reactive (27)">Reactive</a> <a href="https://blog.knoldus.com/category/scala-3/" style="font-size: 275%; padding: 1px; margin: 1px;"  title="Scala (612)">Scala</a> <a href="https://blog.knoldus.com/category/spark/" style="font-size: 114.875%; padding: 1px; margin: 1px;"  title="Spark (63)">Spark</a> <a href="https://blog.knoldus.com/category/test/" style="font-size: 101.16666666667%; padding: 1px; margin: 1px;"  title="Test (16)">Test</a> <a href="https://blog.knoldus.com/category/testing/" style="font-size: 100.875%; padding: 1px; margin: 1px;"  title="testing (15)">testing</a> <a href="https://blog.knoldus.com/category/tutorial/" style="font-size: 100.58333333333%; padding: 1px; margin: 1px;"  title="Tutorial (14)">Tutorial</a> <a href="https://blog.knoldus.com/category/web/" style="font-size: 144.33333333333%; padding: 1px; margin: 1px;"  title="Web (164)">Web</a> </div></li><li id="twitter-3" class="widget-container widget_twitter"><h3 class="widget-title"><a href='http://twitter.com/knolspeak'>Knolspeak Tweets</a></h3><ul class='tweets'>
+			<li>
+				Introduction to database migrations using Flyway <a href="https://blog.knoldus.com/2017/01/26/introduction-to-database-migrations-using-flyway"> blog.knoldus.com/2017/01/26/int…</a> <a href="https://t.co/NANPUjq90t" rel="nofollow">https://t.co/NANPUjq90t</a> 				<a href="http://twitter.com/knolspeak/statuses/824570012707024896" class="timesince">3&nbsp;days&nbsp;ago</a>
+			</li>
+
+			
+			<li>
+				Short Interview With SMACK Tech Stack !!! <a href="https://blog.knoldus.com/2017/01/25/short-interview-with-smack-tech-stack"> blog.knoldus.com/2017/01/25/sho…</a> <a href="https://t.co/aMnfruVdc7" rel="nofollow">https://t.co/aMnfruVdc7</a> 				<a href="http://twitter.com/knolspeak/statuses/824300147156930562" class="timesince">4&nbsp;days&nbsp;ago</a>
+			</li>
+
+			
+			<li>
+				How to integrate your  MAVEN project with SonarQube <a href="https://blog.knoldus.com/2017/01/25/how-to-integrate-your-maven-project-with-sonarqube"> blog.knoldus.com/2017/01/25/how…</a> <a href="https://t.co/TARwfEykNR" rel="nofollow">https://t.co/TARwfEykNR</a> 				<a href="http://twitter.com/knolspeak/statuses/824192197289447424" class="timesince">4&nbsp;days&nbsp;ago</a>
+			</li>
+
+			
+			<li>
+				Jmeter-Handle Hyperlink in jmeter <a href="https://blog.knoldus.com/2017/01/24/jmeter-handle-hyperlink-in-jmeter"> blog.knoldus.com/2017/01/24/jme…</a> <a href="https://t.co/n6PlVLX77B" rel="nofollow">https://t.co/n6PlVLX77B</a> 				<a href="http://twitter.com/knolspeak/statuses/823810065740206080" class="timesince">5&nbsp;days&nbsp;ago</a>
+			</li>
+
+			
+			<li>
+				How to use Twitter API using Node.js <a href="https://blog.knoldus.com/2017/01/22/how-to-use-twitter-api-using-node-js"> blog.knoldus.com/2017/01/22/how…</a> 				<a href="http://twitter.com/knolspeak/statuses/823145274864451584" class="timesince">1&nbsp;week&nbsp;ago</a>
+			</li>
+
+			</ul><a href="http://twitter.com/knolspeak"  class='twitter-follow-button' data-show-count='false' data-link-color='#0066cc' data-text-color='#333333'>Follow @knolspeak</a></li><li id="text-5" class="widget-container widget_text">			<div class="textwidget"><iframe src="https://docs.google.com/spreadsheet/embeddedform?formkey=dDVUSGl3VzJubTJjcFd5RjQtSVNoMFE6MQ" frameborder="0" width="230" height="830" marginheight="0" marginwidth="0"></iframe></div>
+		</li>		<li id="recent-posts-2" class="widget-container widget_recent_entries">		<h3 class="widget-title">Recent Posts</h3>		<ul>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/26/introduction-to-database-migrations-using-flyway/">Introduction to database migrations using&nbsp;Flyway</a>
+						</li>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/25/short-interview-with-smack-tech-stack/">Short Interview With SMACK Tech Stack&nbsp;!!!</a>
+						</li>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/25/how-to-integrate-your-maven-project-with-sonarqube/">How to integrate your  MAVEN project with&nbsp;SonarQube</a>
+						</li>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/24/jmeter-handle-hyperlink-in-jmeter/">Jmeter-Handle Hyperlink in&nbsp;jmeter</a>
+						</li>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/22/how-to-use-twitter-api-using-node-js/">How to use Twitter API using&nbsp;Node.js</a>
+						</li>
+				</ul>
+		</li>		<li id="authors-2" class="widget-container widget_authors"><h3 class="widget-title">Knolders</h3><ul><li><a href="https://blog.knoldus.com/author/abhishekgiri23/"> <img alt='' src='https://1.gravatar.com/avatar/a0b75701bcaa3f19f9054033da6c86d8?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>abhishekgiri23</strong></a></li><li><a href="https://blog.knoldus.com/author/akashsethi24/"> <img alt='' src='https://0.gravatar.com/avatar/fe8d574a303e133d3b67c0199e3f3850?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Akash Sethi</strong></a></li><li><a href="https://blog.knoldus.com/author/akshayrana14/"> <img alt='' src='https://1.gravatar.com/avatar/441747b0c518492b0cee06ef99c81105?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>akshayrana14</strong></a></li><li><a href="https://blog.knoldus.com/author/anuragknoldus/"> <img alt='' src='https://2.gravatar.com/avatar/5296095832539d49e8a3748fbdbe865f?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Anurag Srivastava</strong></a></li><li><a href="https://blog.knoldus.com/author/arpitkulria/"> <img alt='' src='https://0.gravatar.com/avatar/048825a20293406d6c5e88741811f0ee?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Arpit Suthar</strong></a></li><li><a href="https://blog.knoldus.com/author/ashutomar20/"> <img alt='' src='https://0.gravatar.com/avatar/c82d681e32fb96203dab88e19cef579e?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>AshuTomar</strong></a></li><li><a href="https://blog.knoldus.com/author/ayushmishra2005/"> <img alt='' src='https://1.gravatar.com/avatar/7034e8d6f402bf5ffa97b9a139277ec0?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Ayush Mishra</strong></a></li><li><a href="https://blog.knoldus.com/author/bharat1103/"> <img alt='' src='https://1.gravatar.com/avatar/a0d58e8c61c9a5c0ecaa395f069d39f0?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Bharat Singh</strong></a></li><li><a href="https://blog.knoldus.com/author/bhavyaknoldus/"> <img alt='' src='https://2.gravatar.com/avatar/bb95dcab8c7c6ee8a97c369eb5abd200?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>bhavyaknoldus</strong></a></li><li><a href="https://blog.knoldus.com/author/bigtechnologies/"> <img alt='' src='https://0.gravatar.com/avatar/321dfaded20abda15fc5a8145a12483e?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Piyush Rana</strong></a></li><li><img alt='' src='https://0.gravatar.com/avatar/f514e52626c839f60b5ee6d1964b98e3?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Erik Pragt</strong></li><li><a href="https://blog.knoldus.com/author/dagaharshit/"> <img alt='' src='https://2.gravatar.com/avatar/e92278689a5c91a1c5c0c758e0fdcae2?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Harshit Daga</strong></a></li><li><a href="https://blog.knoldus.com/author/deepak028/"> <img alt='' src='https://1.gravatar.com/avatar/1d622733b5ed5e7d461ed17bc5280ada?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>deepak028</strong></a></li><li><a href="https://blog.knoldus.com/author/deepti24/"> <img alt='' src='https://1.gravatar.com/avatar/aef2810757760e4cf6f7aa1ab814ea74?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Deepti Bhardwaj</strong></a></li><li><a href="https://blog.knoldus.com/author/dhiru30/"> <img alt='' src='https://1.gravatar.com/avatar/a5eb3c7c5fb42966c1290768642eaa01?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Dhirendra Kumar Kashyap</strong></a></li><li><a href="https://blog.knoldus.com/author/dotnetask/"> <img alt='' src='https://0.gravatar.com/avatar/fc8e724caa003facdab1d4a0da3694b3?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Nikhil Kumar</strong></a></li><li><a href="https://blog.knoldus.com/author/geetikagupta16/"> <img alt='' src='https://0.gravatar.com/avatar/c76638f11cf407fe919849c47ea1ae94?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>geetikagupta16</strong></a></li><li><a href="https://blog.knoldus.com/author/girishbharti/"> <img alt='' src='https://1.gravatar.com/avatar/416447a478c9ceec84703ca368280f53?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Girish Bharti</strong></a></li><li><a href="https://blog.knoldus.com/author/harishgadiya/"> <img alt='' src='https://0.gravatar.com/avatar/caffb0c14c8a717fbe7698460e2b9840?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>harishgadiya</strong></a></li><li><a href="https://blog.knoldus.com/author/harmeetsingh0013/"> <img alt='' src='https://0.gravatar.com/avatar/fb76774795b132a343b3f0a950231c21?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Harmeet Singh(Taara)</strong></a></li><li><a href="https://blog.knoldus.com/author/harshsharma8/"> <img alt='' src='https://1.gravatar.com/avatar/47a8c48eaefbc1273f05a2ca5db83127?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Harsh Sharma Khandal</strong></a></li><li><a href="https://blog.knoldus.com/author/himaniarora1/"> <img alt='' src='https://2.gravatar.com/avatar/2f1585306c0c696bebb1182e71d7afbd?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Himani Arora</strong></a></li><li><a href="https://blog.knoldus.com/author/himanshuknolder/"> <img alt='' src='https://2.gravatar.com/avatar/8018131618057d87663fad94185577a4?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Himanshu Gupta</strong></a></li><li><img alt='' src='https://1.gravatar.com/avatar/d52339656f74bc6bb2cf27e47f5e4301?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>hohmanndavid</strong></li><li><a href="https://blog.knoldus.com/author/imsonublog/"> <img alt='' src='https://2.gravatar.com/avatar/29697abe96108707475e3b9250d14b3f?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>imsonublog</strong></a></li><li><a href="https://blog.knoldus.com/author/jyotsnakaran/"> <img alt='' src='https://0.gravatar.com/avatar/97745f8a4a45b4c3b932d691074529af?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>jyotsnakaran</strong></a></li><li><a href="https://blog.knoldus.com/author/khandelwalrishi/"> <img alt='' src='https://0.gravatar.com/avatar/9a529dc0b1ff22665f6e78e726ffdced?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Rishi Khandelwal</strong></a></li><li><a href="https://blog.knoldus.com/author/knoldermanish/"> <img alt='' src='https://0.gravatar.com/avatar/6c8236df7516c98c1ea93e676afe7ed5?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Manish Mishra</strong></a></li><li><a href="https://blog.knoldus.com/author/knoldus/"> <img alt='' src='https://2.gravatar.com/avatar/2414b0393c89ae56adbad27413d175d2?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Vikas Hazrati</strong></a></li><li><a href="https://blog.knoldus.com/author/kunalkapoor642/"> <img alt='' src='https://0.gravatar.com/avatar/071b821ffac7f653decc98fe2e5f1339?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Kunal Kapoor</strong></a></li><li><a href="https://blog.knoldus.com/author/lihas55/"> <img alt='' src='https://0.gravatar.com/avatar/c1e0b437b6d3eddc47d0fd3d2bb4fe57?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>SAHIL SAWHNEY</strong></a></li><li><a href="https://blog.knoldus.com/author/manoj12689/"> <img alt='' src='https://2.gravatar.com/avatar/8bbe897accefc0ee7440c4b998162f00?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>ManojMathpal</strong></a></li><li><a href="https://blog.knoldus.com/author/narayan343/"> <img alt='' src='https://1.gravatar.com/avatar/d15432b359a260a11a459d6c0197f81f?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Narayan Kumar</strong></a></li><li><a href="https://blog.knoldus.com/author/pallavisingh9/"> <img alt='' src='https://1.gravatar.com/avatar/1f58731a6a7593ddc72b3ce275b3866e?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Pallavi Singh</strong></a></li><li><a href="https://blog.knoldus.com/author/payal13/"> <img alt='' src='https://0.gravatar.com/avatar/f0b7046344b9a650da41a4af7f553d96?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Payal sharma</strong></a></li><li><a href="https://blog.knoldus.com/author/prabhatknoldus/"> <img alt='' src='https://1.gravatar.com/avatar/1a5ad00b2d4d94a8fbb333c627b8559e?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Prabhat Kashyap</strong></a></li><li><a href="https://blog.knoldus.com/author/prashantgoel6/"> <img alt='' src='https://2.gravatar.com/avatar/5afe8297661ef419be06311333dc3e3a?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Prashant Goel</strong></a></li><li><a href="https://blog.knoldus.com/author/princetarar/"> <img alt='' src='https://0.gravatar.com/avatar/c7e79189658702b3b604ad3c9880327f?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Anubhavtarar</strong></a></li><li><a href="https://blog.knoldus.com/author/priyankawadhwa/"> <img alt='' src='https://2.gravatar.com/avatar/2689d06b9c5c8da9fc759d2a070dda52?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Priyanka Wadhwa</strong></a></li><li><a href="https://blog.knoldus.com/author/pushpendupurkait/"> <img alt='' src='https://0.gravatar.com/avatar/91687baac49ab51d564a79a065465192?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>pushpendupurkait</strong></a></li><li><a href="https://blog.knoldus.com/author/rahulforallp/"> <img alt='' src='https://2.gravatar.com/avatar/22ec0e6622f6d1156953d8c3b2a91eb1?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Rahul Kumar</strong></a></li><li><a href="https://blog.knoldus.com/author/raoswati/"> <img alt='' src='https://1.gravatar.com/avatar/d4d15f85fd17dd970b522cd4e10edcac?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>raoswati</strong></a></li><li><a href="https://blog.knoldus.com/author/rishabhrv/"> <img alt='' src='https://2.gravatar.com/avatar/2235e2179f5a60bf4b05a4311a680974?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>rishabhverma</strong></a></li><li><a href="https://blog.knoldus.com/author/sandeepknol/"> <img alt='' src='https://2.gravatar.com/avatar/214b4348d4734e7f8b5b718acaee7c81?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>sandeep</strong></a></li><li><a href="https://blog.knoldus.com/author/sangeetagulia/"> <img alt='' src='https://1.gravatar.com/avatar/a47295ccb26dee5967aa0d162f509ca0?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>sangeetagulia</strong></a></li><li><a href="https://blog.knoldus.com/author/sumitknoldus/"> <img alt='' src='https://2.gravatar.com/avatar/b4080cc199e48e9c985863e82c71001c?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>sumitknoldus</strong></a></li><li><a href="https://blog.knoldus.com/author/sushil382/"> <img alt='' src='https://1.gravatar.com/avatar/ad06e3e3cc5448e09e368efa0f0c8f5f?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>Sushil Kumar Singh</strong></a></li><li><a href="https://blog.knoldus.com/author/teena2015/"> <img alt='' src='https://0.gravatar.com/avatar/36f0a8e64bd8cb9f2d30ea2ea5c184b3?s=48&#038;d=identicon&#038;r=G' class='avatar avatar-48' height='48' width='48' /> <strong>teenaVashist</strong></a></li></ul></li><li id="facebook-likebox-2" class="widget-container widget_facebook_likebox"><h3 class="widget-title"><a href="https://www.facebook.com/KnoldusSoftware/">Connect with us on Facebook!</a></h3>		<div id="fb-root"></div>
+		<div class="fb-page" data-href="https://www.facebook.com/KnoldusSoftware/" data-width="340"  data-height="580" data-hide-cover="false" data-show-facepile="true" data-show-posts="true">
+		<div class="fb-xfbml-parse-ignore"><blockquote cite="https://www.facebook.com/KnoldusSoftware/"><a href="https://www.facebook.com/KnoldusSoftware/">Connect with us on Facebook!</a></blockquote></div>
+		</div>
+		<script>(function(d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return; js = d.createElement(s); js.id = id; js.src = '//connect.facebook.net/en_US/sdk.js#xfbml=1&appId=249643311490&version=v2.3'; fjs.parentNode.insertBefore(js, fjs); }(document, 'script', 'facebook-jssdk'));</script>
+		</li>			</ul>
+		</div><!-- #primary .widget-area -->
+
+	</div><!-- #main -->
+
+	<div id="footer" role="contentinfo">
+		<div id="colophon">
+
+
+
+			<div id="footer-widget-area" role="complementary">
+
+				<div id="first" class="widget-area">
+					<ul class="xoxo">
+						<li id="text-7" class="widget-container widget_text">			<div class="textwidget"><a href="http://www.knoldus.com/home.knol"><img src="https://knoldus.files.wordpress.com/2014/06/logo.png"></a>
+
+<ul>
+<li><a href="http://www.knoldus.com/work/services/why-knoldus-for-scala.knol" title="Why Knoldus">Why
+											Knoldus</a></li>
+
+<li><a href="http://www.knoldus.com/work/services/engagement-models.knol" rel="external" title="engagement-models">Engagement Model </a></li>
+
+<li><a href="http://www.knoldus.com/work/testimonials.knol" rel="external" title="Testimonials"><i class="icon-circle-arrow-right"></i>Testimonials </a></li>
+<li><a href="http://www.knoldus.com/work/process.knol" rel="external" title="Process"><i class="icon-circle-arrow-right"></i>Process </a></li>
+<li><a href="http://www.knoldus.com/work/services.knol" rel="external" title="Services"><i class="icon-circle-arrow-right"></i>Services </a></li>
+<li><a href="http://www.knoldus.com/work/casestudies.knol" rel="external" title="Casestudies"><i class="icon-circle-arrow-right"></i>Case Studies </a></li>
+<li><a href="http://www.knoldus.com/about/team.knol" rel="external" title="Team"><i class="icon-circle-arrow-right"></i>Team </a></li>
+<li><a href="http://www.knoldus.com/about/technologies.knol" rel="external" title="Technologies"><i class="icon-circle-arrow-right"></i>Technologies</a></li>
+<li><a href="http://www.knoldus.com/connect/contactus.knol" rel="external" title="Contactus"><i class="icon-circle-arrow-right"></i>Contact Us </a></li>
+<li><a href="http://www.knoldus.com/connect/careers.knol" rel="external" title="Careers"><i class="icon-circle-arrow-right"></i>Careers </a></li>
+<li><a href="http://www.knoldus.com/sitemap/sitemap.knol" rel="external" title="Sitemap"><i class="icon-circle-arrow-right"></i>Site Map </a></li>
+
+</ul>
+
+ <div id="upper-images">
+<h2 class="partner-heading">PARTNERS</h2>
+<div id="footer-left">
+<img src="https://knoldus.files.wordpress.com/2016/10/lb.png" />
+<a href="http://www.lightbend.com/partners/systemintegrator-partners">Lightbend Partner</a>
+</div>
+<div class="footer-right">
+ <img src="https://knoldus.files.wordpress.com/2016/09/confluent-blue.png" />
+<a id="anchor-tg" href="http://www.confluent.io/partners/">Confluent Partner</a>
+</div>
+</div>
+<div class="lower-images">
+ <img src="https://knoldus.files.wordpress.com/2016/10/db.png" />
+<a href="https://databricks.com/spark/certification/certified-system-integrators">Databricks Partner</a>
+</div>
+</div>
+		</li>					</ul>
+				</div><!-- #first .widget-area -->
+
+				<div id="second" class="widget-area">
+					<ul class="xoxo">
+								<li id="recent-posts-4" class="widget-container widget_recent_entries">		<h3 class="widget-title">Recent Posts</h3>		<ul>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/26/introduction-to-database-migrations-using-flyway/">Introduction to database migrations using&nbsp;Flyway</a>
+						</li>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/25/short-interview-with-smack-tech-stack/">Short Interview With SMACK Tech Stack&nbsp;!!!</a>
+						</li>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/25/how-to-integrate-your-maven-project-with-sonarqube/">How to integrate your  MAVEN project with&nbsp;SonarQube</a>
+						</li>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/24/jmeter-handle-hyperlink-in-jmeter/">Jmeter-Handle Hyperlink in&nbsp;jmeter</a>
+						</li>
+					<li>
+				<a href="https://blog.knoldus.com/2017/01/22/how-to-use-twitter-api-using-node-js/">How to use Twitter API using&nbsp;Node.js</a>
+						</li>
+				</ul>
+		</li>							</ul>
+				</div><!-- #second .widget-area -->
+
+				<div id="third" class="widget-area">
+					<ul class="xoxo">
+						<li id="text-8" class="widget-container widget_text"><h3 class="widget-title">Get In Touch</h3>			<div class="textwidget"><div class="contactinfo">
+<img src="https://knoldus.files.wordpress.com/2014/06/point-512.png" height="18px">
+
+<img src="https://knoldus.files.wordpress.com/2014/06/point-512.png" height="18px" class="rightImg">
+
+    <div class="OfficeLeft">
+
+      <h3>
+
+HEAD OFFICE</h3>
+       <div class="address">
+         Knoldus House <br> 10/19, Ground Floor<br> West Patel Nagar<br /> New Delhi - 110008 <br> India<br><br>
+       </div>
+
+<h3>
+
+CANADA OFFICE</h3>
+       <div class="address">
+        Knoldus Inc<br> 295 Hagey Blvd #300<br />Waterloo, ON N2L 6R5<br> Canada
+       </div>
+    </div>
+
+  <div class="OfficeRight">
+
+ <h3> DEVELOPMENT OFFICE</h3>
+     <div class="address">
+         <i class="icon-arrow-right"></i> 										Knoldus House<br>  SDF L-11, Noida Special Economic Zone<br>									Sector 81<br> Noida, Uttar Pradesh - 201305<br>India<br>
+<br>
+       </div>
+       <div class="address">
+         <i class="icon-arrow-right"></i>Knoldus House<br> 30/29, 1st Floor, Above UCO Bank<br>
+											Near Siddhartha Hotel<br> East Patel Nagar, New Delhi -
+											110008<br>India
+       </div>
+   </div>
+</div>
+
+<div class="contactinfo secondrow">
+<img src="https://knoldus.files.wordpress.com/2014/06/point-512.png" height="18px">
+
+<img src="https://knoldus.files.wordpress.com/2014/06/contact-methods-phone-icon.png" height="15px" class="rightImg">
+
+<img src="https://knoldus.files.wordpress.com/2014/06/greyemail.png" height="10px" class="rightImgmail">
+    <div class="OfficeLeft">
+      <h3>USA OFFICE</h3>
+       <div class="address">
+        Knoldus LLC<br> 743, Catamaran Street <br> Foster
+											City, CA - 96024<br>USA
+       </div>
+    </div>
+
+  <div class="OfficeRight">
+ <h3>PHONE</h3>
+       <div class="address">
+        +91 - 1142316525
+       </div>
+ 
+
+  
+       <h3 class="email">EMAIL</h3>
+       <div class="address">
+       info@knoldus.com
+       </div>
+   </div>
+</div></div>
+		</li>					</ul>
+				</div><!-- #third .widget-area -->
+
+
+			</div><!-- #footer-widget-area -->
+
+			<div id="site-info">
+				<a href="https://blog.knoldus.com/" title="Knoldus" rel="home">
+					Knoldus				</a>
+			</div><!-- #site-info -->
+
+			<div id="site-generator">
+								<a href="https://wordpress.com/?ref=footer_blog">Blog at WordPress.com.</a>
+			</div><!-- #site-generator -->
+
+		</div><!-- #colophon -->
+	</div><!-- #footer -->
+
+</div><!-- #wrapper -->
+
+<!--  -->
+<script type='text/javascript' src='//0.gravatar.com/js/gprofiles.js?ver=201705y'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var WPGroHo = {"my_hash":""};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://s1.wp.com/wp-content/mu-plugins/gravatar-hovercards/wpgroho.js?m=1380573781h'></script>
+
+	<script>
+		//initialize and attach hovercards to all gravatars
+		jQuery( document ).ready( function( $ ) {
+
+			if (typeof Gravatar === "undefined"){
+				return;
+			}
+
+			if ( typeof Gravatar.init !== "function" ) {
+				return;
+			}			
+
+			Gravatar.profile_cb = function( hash, id ) {
+				WPGroHo.syncProfileData( hash, id );
+			};
+			Gravatar.my_hash = WPGroHo.my_hash;
+			Gravatar.init( 'body', '#wp-admin-bar-my-account' );
+		});
+	</script>
+
+		<div style="display:none">
+	<div class="grofile-hash-map-b76f6a3c023a4927d163a044af18e9e3">
+	</div>
+	<div class="grofile-hash-map-94ad1643f1e4be05140cb96a762be1ad">
+	</div>
+	<div class="grofile-hash-map-a90c97eb1427a000b4b0c8fb124367ce">
+	</div>
+	</div>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var HighlanderComments = {"loggingInText":"Logging In\u2026","submittingText":"Posting Comment\u2026","postCommentText":"Post Comment","connectingToText":"Connecting to %s","commentingAsText":"%1$s: You are commenting using your %2$s account.","logoutText":"Log Out","loginText":"Log In","connectURL":"https:\/\/knoldus.wordpress.com\/public.api\/connect\/?action=request","logoutURL":"https:\/\/knoldus.wordpress.com\/wp-login.php?action=logout&_wpnonce=f60e02e918","homeURL":"https:\/\/blog.knoldus.com\/","postID":"6584","gravDefault":"identicon","enterACommentError":"Please enter a comment","enterEmailError":"Please enter your email address here","invalidEmailError":"Invalid email address","enterAuthorError":"Please enter your name here","gravatarFromEmail":"This picture will show whenever you leave a comment. Click to customize it.","logInToExternalAccount":"Log in to use details from one of these accounts.","change":"Change","changeAccount":"Change Account","comment_registration":"","userIsLoggedIn":"","isJetpack":"0","text_direction":"ltr"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://s2.wp.com/_static/??/wp-content/js/jquery/jquery.autoresize.js,/wp-content/mu-plugins/highlander-comments/script.js?m=1479964158j'></script>
+<script type='text/javascript' charset='UTF-8' id='polldaddyRatings'><!--//--><![CDATA[//><!--
+PDRTJS_settings_5458192_post_6584={"id":5458192,"unique_id":"wp-post-6584","title":"Map%20reduce%20with%20Akka%20and%20Scala%3A%20The%20famous%20word%26nbsp%3Bcount","permalink":"https:\/\/blog.knoldus.com\/2014\/09\/29\/map-reduce-with-akka-and-scala-the-famous-word-count\/","item_id":"_post_6584"}; if ( typeof PDRTJS_RATING !== 'undefined' ){if ( typeof PDRTJS_5458192_post_6584 == 'undefined' ){PDRTJS_5458192_post_6584 = new PDRTJS_RATING( PDRTJS_settings_5458192_post_6584 );}}
+//--><!]]></script><script type='text/javascript' charset='UTF-8' src='https://polldaddy.com/js/rating/rating.js'></script>
+	<script type="text/javascript">
+		window.WPCOM_sharing_counts = {"https:\/\/blog.knoldus.com\/2014\/09\/29\/map-reduce-with-akka-and-scala-the-famous-word-count\/":6584};
+	</script>
+		<script type="text/javascript">
+			var windowOpen;
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-twitter' ).on( 'click', function() {
+				if ( 'undefined' !== typeof windowOpen ){ // If there's another sharing window open, close it.
+					windowOpen.close();
+				}
+				windowOpen = window.open( jQuery(this).attr( 'href' ), 'wpcomtwitter', 'menubar=1,resizable=1,width=600,height=350' );
+				return false;
+			});
+		});
+		</script>
+				<script type="text/javascript">
+			var windowOpen;
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-facebook' ).on( 'click', function() {
+				if ( 'undefined' !== typeof windowOpen ){ // If there's another sharing window open, close it.
+					windowOpen.close();
+				}
+				windowOpen = window.open( jQuery(this).attr( 'href' ), 'wpcomfacebook', 'menubar=1,resizable=1,width=600,height=400' );
+				return false;
+			});
+		});
+		</script>
+				<script type="text/javascript">
+			var windowOpen;
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-linkedin' ).on( 'click', function() {
+				if ( 'undefined' !== typeof windowOpen ){ // If there's another sharing window open, close it.
+					windowOpen.close();
+				}
+				windowOpen = window.open( jQuery(this).attr( 'href' ), 'wpcomlinkedin', 'menubar=1,resizable=1,width=580,height=450' );
+				return false;
+			});
+		});
+		</script>
+				<script type="text/javascript">
+			var windowOpen;
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-google-plus-1' ).on( 'click', function() {
+				if ( 'undefined' !== typeof windowOpen ){ // If there's another sharing window open, close it.
+					windowOpen.close();
+				}
+				windowOpen = window.open( jQuery(this).attr( 'href' ), 'wpcomgoogle-plus-1', 'menubar=1,resizable=1,width=480,height=550' );
+				return false;
+			});
+		});
+		</script>
+							<script type="text/javascript">
+				jQuery(document).on('ready', function(){
+					jQuery('body').on('click', 'a.share-pinterest', function(e){
+						e.preventDefault();
+						// Load Pinterest Bookmarklet code
+						var s = document.createElement("script");
+						s.type = "text/javascript";
+						s.src = window.location.protocol + "//assets.pinterest.com/js/pinmarklet.js?r=" + ( Math.random() * 99999999 );
+						var x = document.getElementsByTagName("script")[0];
+						x.parentNode.insertBefore(s, x);
+						// Trigger Stats
+						var s = document.createElement("script");
+						s.type = "text/javascript";
+						s.src = this + ( this.toString().indexOf( '?' ) ? '&' : '?' ) + 'js_only=1';
+						var x = document.getElementsByTagName("script")[0];
+						x.parentNode.insertBefore(s, x);
+					});
+				});
+			</script>
+				<script type="text/javascript">
+			var windowOpen;
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-tumblr' ).on( 'click', function() {
+				if ( 'undefined' !== typeof windowOpen ){ // If there's another sharing window open, close it.
+					windowOpen.close();
+				}
+				windowOpen = window.open( jQuery(this).attr( 'href' ), 'wpcomtumblr', 'menubar=1,resizable=1,width=450,height=450' );
+				return false;
+			});
+		});
+		</script>
+				<script type="text/javascript">
+			var windowOpen;
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-pocket' ).on( 'click', function() {
+				if ( 'undefined' !== typeof windowOpen ){ // If there's another sharing window open, close it.
+					windowOpen.close();
+				}
+				windowOpen = window.open( jQuery(this).attr( 'href' ), 'wpcompocket', 'menubar=1,resizable=1,width=450,height=450' );
+				return false;
+			});
+		});
+		</script>
+			<div id="sharing_email" style="display: none;">
+		<form action="/2014/09/29/map-reduce-with-akka-and-scala-the-famous-word-count/" method="post">
+			<label for="target_email">Send to Email Address</label>
+			<input type="email" name="target_email" id="target_email" value="" />
+
+			
+				<label for="source_name">Your Name</label>
+				<input type="text" name="source_name" id="source_name" value="" />
+
+				<label for="source_email">Your Email Address</label>
+				<input type="email" name="source_email" id="source_email" value="" />
+
+						<input type="text" id="jetpack-source_f_name" name="source_f_name" class="input" value="" size="25" autocomplete="off" />
+			<script> document.getElementById('jetpack-source_f_name').value = ''; </script>
+			<div class="recaptcha" id="sharing_recaptcha"></div><input type="hidden" name="recaptcha_public_key" id="recaptcha_public_key" value="6LcYW8MSAAAAADBAuEH9yaPcF7lWh11Iq62ZKtoo" />
+			<img style="float: right; display: none" class="loading" src="https://s2.wp.com/wp-content/mu-plugins/post-flair/sharing/images/loading.gif" alt="loading" width="16" height="16" />
+			<input type="submit" value="Send Email" class="sharing_send" />
+			<a rel="nofollow" href="#cancel" class="sharing_cancel">Cancel</a>
+
+			<div class="errors errors-1" style="display: none;">
+				Post was not sent - check your email addresses!			</div>
+
+			<div class="errors errors-2" style="display: none;">
+				Email check failed, please try again			</div>
+
+			<div class="errors errors-3" style="display: none;">
+				Sorry, your blog cannot share posts by email.			</div>
+		</form>
+	</div>
+<script type='text/javascript' src='https://s1.wp.com/wp-content/mu-plugins/akismet-3.0/_inc/form.js?m=1404442431h'></script>
+<script type='text/javascript' src='https://platform.twitter.com/widgets.js?ver=20111117'></script>
+<script type='text/javascript' src='https://s1.wp.com/_static/??-eJzTLy/QTc7PK0nNK9EvyClNz8wr1i+uzCtJrMjITM/IAeKS1CJMEWP94uSizIISoOIM5/yiVL2sYh19yo1yKiotzvBKLEukpnnByYk5IAPtc20NTYyMjE2MDI1NsgDVMF/F'></script>
+<script type='text/javascript'>
+	(function(){
+		var corecss = document.createElement('link');
+		var themecss = document.createElement('link');
+		var corecssurl = "https://s0.wp.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shCore.css?ver=3.0.9b";
+		if ( corecss.setAttribute ) {
+				corecss.setAttribute( "rel", "stylesheet" );
+				corecss.setAttribute( "type", "text/css" );
+				corecss.setAttribute( "href", corecssurl );
+		} else {
+				corecss.rel = "stylesheet";
+				corecss.href = corecssurl;
+		}
+		document.getElementsByTagName("head")[0].insertBefore( corecss, document.getElementById("syntaxhighlighteranchor") );
+		var themecssurl = "https://s0.wp.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shThemeDefault.css?m=1363304414h&amp;ver=3.0.9b";
+		if ( themecss.setAttribute ) {
+				themecss.setAttribute( "rel", "stylesheet" );
+				themecss.setAttribute( "type", "text/css" );
+				themecss.setAttribute( "href", themecssurl );
+		} else {
+				themecss.rel = "stylesheet";
+				themecss.href = themecssurl;
+		}
+		//document.getElementById("syntaxhighlighteranchor").appendChild(themecss);
+		document.getElementsByTagName("head")[0].insertBefore( themecss, document.getElementById("syntaxhighlighteranchor") );
+	})();
+	SyntaxHighlighter.config.strings.expandSource = '+ expand source';
+	SyntaxHighlighter.config.strings.help = '?';
+	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
+	SyntaxHighlighter.config.strings.noBrush = 'Can\'t find brush for: ';
+	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush wasn\'t configured for html-script option: ';
+	SyntaxHighlighter.defaults['pad-line-numbers'] = false;
+	SyntaxHighlighter.defaults['toolbar'] = false;
+	SyntaxHighlighter.all();
+
+// Infinite scroll support
+jQuery( function( $ ) {
+	$( document.body ).on( 'post-load', function() {
+		SyntaxHighlighter.highlight();
+	} );
+} );
+</script>
+<link rel='stylesheet' id='all-css-0-3' href='https://s2.wp.com/wp-content/mu-plugins/widgets/facebook-likebox/style.css?m=1436472654h' type='text/css' media='all' />
+<script type='text/javascript'>
+/* <![CDATA[ */
+var actionbardata = {"siteID":"24082517","siteName":"Knoldus","siteURL":"https:\/\/blog.knoldus.com","icon":"<img alt='' src='https:\/\/s1.wp.com\/i\/logo\/wpcom-gray-white.png' class='avatar avatar-50' height='50' width='50' \/>","canManageOptions":"","canCustomizeSite":"","isFollowing":"","themeSlug":"pub\/twentyten","signupURL":"https:\/\/wordpress.com\/start\/","loginURL":"https:\/\/knoldus.wordpress.com\/wp-login.php?redirect_to=https%3A%2F%2Fblog.knoldus.com%2F2014%2F09%2F29%2Fmap-reduce-with-akka-and-scala-the-famous-word-count%2F","themeURL":"https:\/\/wordpress.com\/themes\/twentyten\/","xhrURL":"https:\/\/blog.knoldus.com\/wp-admin\/admin-ajax.php","nonce":"f07270b839","isSingular":"1","isFolded":"","isLoggedIn":"","isMobile":"","subscribeNonce":"<input type=\"hidden\" id=\"_wpnonce\" name=\"_wpnonce\" value=\"be472b7dff\" \/>","referer":"https:\/\/blog.knoldus.com\/2014\/09\/29\/map-reduce-with-akka-and-scala-the-famous-word-count\/","canFollow":"","statusMessage":"","customizeLink":"https:\/\/knoldus.wordpress.com\/wp-admin\/customize.php?url=https%3A%2F%2Fknoldus.wordpress.com%2F2014%2F09%2F29%2Fmap-reduce-with-akka-and-scala-the-famous-word-count%2F","postID":"6584","shortlink":"http:\/\/wp.me\/p1D2XH-1Ic","canEditPost":"","editLink":"https:\/\/wordpress.com\/post\/blog.knoldus.com\/6584","statsLink":"https:\/\/wordpress.com\/stats\/post\/6584\/blog.knoldus.com","i18n":{"view":"View site","follow":"Follow","following":"Following","edit":"Edit","login":"Log in","signup":"Sign up","customize":"Customize","report":"Report this content","themeInfo":"Get theme: Twenty Ten","shortlink":"Copy shortlink","copied":"Copied","followedText":"New posts from this site will now appear in your <a href=\"https:\/\/wordpress.com\/\">Reader<\/a>","foldBar":"Collapse this bar","unfoldBar":"Expand this bar","editSubs":"Manage subscriptions","viewReader":"View site in the Reader","subscribe":"Sign me up","enterEmail":"Enter your email address","followers":"Join 2,270 other followers","alreadyUser":"Already have a WordPress.com account? <a href=\"https:\/\/knoldus.wordpress.com\/wp-login.php?redirect_to=https%3A%2F%2Fblog.knoldus.com%2F2014%2F09%2F29%2Fmap-reduce-with-akka-and-scala-the-famous-word-count%2F\">Log in now.<\/a>","stats":"Stats"}};
+/* ]]> */
+</script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var _wp_google_translate_widget = {"lang":"en"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://s1.wp.com/_static/??-eJx9jMEOwiAQRH9IujG2xovxWxA2uBUWhKWtfy892JiY9DaZN/NgTspEFmSBsYDFiQympRvLAX5QqCr56ogLeHpigVfFig/N1mP+jomNr7bBJjIxhHZUGZN/d4F4x6ht4+quMwRdBHNLKk6YM62yrdszGKHIq2FLO+uZrEMp4GJ0HpVkzcVrwb+iOW7heuwvw9D359MwfgCbInEG'></script>
+<script type='text/javascript' src='//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit&#038;ver=4.6.1-RC1-38499'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var sharing_js_options = {"lang":"en","counts":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://s0.wp.com/wp-content/mu-plugins/post-flair/sharing/sharing.js?m=1472506657h'></script>
+<script type="text/javascript">
+// <![CDATA[
+(function() {
+try{
+  if ( window.external &&'msIsSiteMode' in window.external) {
+    if (window.external.msIsSiteMode()) {
+      var jl = document.createElement('script');
+      jl.type='text/javascript';
+      jl.async=true;
+      jl.src='/wp-content/plugins/ie-sitemode/custom-jumplist.php';
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(jl, s);
+    }
+  }
+}catch(e){}
+})();
+// ]]>
+</script>		<iframe src='https://widgets.wp.com/likes/master.html?ver=20160429#ver=20160429' scrolling='no' id='likes-master' name='likes-master' style='display:none;'></iframe>
+		<div id='likes-other-gravatars'><div class="likes-text"><span>%d</span> bloggers like this:</div><ul class="wpl-avatars sd-like-gravatars"></ul></div>
+		<script>
+			var _comscore = _comscore || [];
+			_comscore.push({
+				c1: "2",
+				c2: "7518284"
+			});
+			(function() {
+				var s = document.createElement("script"),
+					el = document.getElementsByTagName("script")[0];
+				s.defer = true;
+				s.src = (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js";
+				el.parentNode.insertBefore(s, el);
+			})();
+		</script>
+		<noscript>
+			<p class="robots-nocontent"><img src="https://sb.scorecardresearch.com/p?c1=2&c2=7518284&c3=&c4=&c5=&c6=&c15=&cv=2.0&cj=1" alt="" style="display:none;" width="1" height="1" /></p>
+		</noscript><script src="//stats.wp.com/w.js?55" type="text/javascript" async defer></script>
+<script type="text/javascript">
+_tkq = window._tkq || [];
+_stq = window._stq || [];
+_tkq.push(['storeContext', {'blog_id':'24082517','blog_tz':'5','user_lang':'en','blog_lang':'en','user_id':'0'}]);
+_stq.push(['view', {'blog':'24082517','v':'wpcom','tz':'5','user_id':'0','post':'6584','subd':'knoldus'}]);
+_stq.push(['extra', {'crypt':'UE40eW5QN0p8M2Y/RE1TaVhzUzFMbjdWNHpwZGhTayxPSUFCMGRVYVNrSFguN3FwSmQ5RGtNX3VQcj1yVzhiflM1THQtLGFdQ2toOXYlQjYrMC9LMGRJJjR6ajd1Lm9nQXNlX3RUODVsUjZzM1BLQVs1aC4zWTR5VTRZW09DQUdwcWJlSGpDZmdmeEU1Y01WaS9BQj0mTD9DbG9mMXBOJm1NTXEvJkFRR00lQ2NPQ3Y1bHZuUHVLWjQ2aFprWUswazVHRy4xLStsaTZfTEljSnlQfj1KJkw4eTkwcHBPdXhbUWVKeVg0QX5nb2NiMEl3LUV0K2lrcFIuVV12eWJmcUsuVXYmPXNVS2xKVX5NP3BCV3ZkdVN6Vl9QYUdRK1NTekNZWTBfZ1hQfEVYLVRpalBmW2FpeG5MWFZ8YUdubUg9UCZleXUwQTVuMUVQQlBPfj9HRlIxTl1LLTRyOF9Pc2tyRmtUTUV5cVs='}]);
+_stq.push([ 'clickTrackerInit', '24082517', '6584' ]);
+	</script>
+<noscript><img src="https://pixel.wp.com/b.gif?v=noscript" style="height:0px;width:0px;overflow:hidden" alt="" /></noscript>
+<script>
+if ( 'object' === typeof wpcom_mobile_user_agent_info ) {
+
+	wpcom_mobile_user_agent_info.init();
+	var mobileStatsQueryString = "";
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedPlatformName )
+		mobileStatsQueryString += "&x_" + 'mobile_platforms' + '=' + wpcom_mobile_user_agent_info.matchedPlatformName;
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedUserAgentName )
+		mobileStatsQueryString += "&x_" + 'mobile_devices' + '=' + wpcom_mobile_user_agent_info.matchedUserAgentName;
+	
+	if( wpcom_mobile_user_agent_info.isIPad() )
+		mobileStatsQueryString += "&x_" + 'ipad_views' + '=' + 'views';
+
+	if( "" != mobileStatsQueryString ) {
+		new Image().src = document.location.protocol + '//pixel.wp.com/g.gif?v=wpcom-no-pv' + mobileStatsQueryString + '&baba=' + Math.random();
+	}
+	
+}
+</script></body>
+</html>
